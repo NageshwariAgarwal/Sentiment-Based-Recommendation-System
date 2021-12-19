@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sentiment Based Product Recommendation</title>
+
+    <style>
+    </style>
+</head>
+<body>
+    <div class="sentiment">
+        <nav style="background-color: gray">
+        <div style="text-align: -webkit-center;">
+            <a href="/" style = "
+             color: white;
+             text-decoration: auto;
+             font-size: xx-large;">Sentiment Based Product Recommendation</a>
+        </div>
+        </nav>
+        <form action="{{ url_for('predict')}}" method="post" style="text-align: -webkit-center;">
+            <br><br>
+            <label>Enter the UserName : </label>
+
+            <input id="one" type="text" name="UserName" placeholder="Enter your userName">
+            <br><br>
+            <br><br>
+
+            <button class="button" type="submit">Predict</button>
+
+            <h2>Top 5 recommendations are:</h2>
+            <h3>{{ prediction_text }}</h3> <!-- Output the Result -->
+        </form>
+        <br>
+        <br>
+    </div>
+</body>
+</html>
