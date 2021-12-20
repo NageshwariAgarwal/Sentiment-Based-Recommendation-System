@@ -1,6 +1,5 @@
 # import Libraries
 import pickle
-import pandas as pd
 from flask import Flask, request, render_template
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -16,6 +15,7 @@ app = Flask(__name__)
 model = pickle.load(open('./Models/model.pkl', 'rb'))
 FinalRating = pickle.load(open('./Models/FinalRating.pkl', 'rb'))
 data = pickle.load(open('./Models/processedData.pkl', 'rb'))
+features = pickle.load(open('./Models/features.pkl', 'rb'))
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -44,21 +44,18 @@ def recommend(username):
     try:
         # Filter top 20  recommendations
         userRecommendations = FinalRating.loc[username].sort_values(ascending=False)[0:20]
-        userRecommendationsResult = {'product': userRecommendations.index, 'recomvalue': userRecommendations.values}
-        newdf = pd.DataFrame(userRecommendationsResult, index=range(0, 20))
-        positiveRating = []
-        for i in range(20):
-            positiveRating.append(
-                sum(data[data['name'] == newdf['product'][i]]['user_sentiment'].values) /
-                len(data[data['name'] == newdf['product'][i]]))
-        newdf['positiveRating'] = positiveRating
-        newdf.sort_values(['positiveRating'], ascending=False)
-        # Top 5 Recommendations
-        # sort values based on positive rating
-        result = newdf.sort_values(['positiveRating'], ascending=False)[:5]
-        result.reset_index(inplace=True)
-        recommended = result['product'].values
-        return recommended
+        vectorizer = TfidfVectorizer(vocabulary=features)
+        newdf = data[data.name.isin(userRecommendations.index)]
+        X = vectorizer.fit_transform(newdf['Review'])
+        newdf = newdf[['name']]
+        # Make prediction
+        newdf['prediction'] = model.predict(X)
+        final_df = newdf.groupby('name').sum()
+        # Compute the most positive response
+        final_df['positive_percent'] = final_df.apply(lambda x: x['prediction'] / sum(final_df['prediction']), axis=1)
+        final_list = final_df.sort_values('positive_percent', ascending=False).iloc[:5, :].index
+        return final_list
+
     except:
         return "No User Available /Zero Recommendations for valid user."
 
